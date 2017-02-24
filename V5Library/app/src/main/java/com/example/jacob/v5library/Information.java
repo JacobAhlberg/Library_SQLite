@@ -31,13 +31,15 @@ public class Information extends AppCompatActivity {
         bookId = getIntent().getExtras().getLong("bookId");
         dataSource.open();
 
+        //Get the book object that the user clicked on.
         thisBooks = dataSource.getBook(bookId);
 
+        //Gets the title and author from the book
         titleTxt.setText(thisBooks.getTitle());
         authorTxt.setText(thisBooks.getAuthor());
 
 
-        //Remove book from database
+        //Remove book from database and gives a toast-message
         removeBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -47,7 +49,9 @@ public class Information extends AppCompatActivity {
             }
         });
 
-        //Update book from dataBase
+        /*Grabs the new context of the editTexts and puts it in two different Strings and checks
+        * that at least one of the Strings contains at least a single sign. Then updates the book.
+        * */
         updateBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -55,7 +59,7 @@ public class Information extends AppCompatActivity {
                 String newAuthorName = newAuthor.getText().toString();
 
                 if (newBookTitle.isEmpty() && newAuthorName.isEmpty())
-                    Toast.makeText(Information.this, "Wrooong", Toast.LENGTH_LONG).show();
+                    Toast.makeText(Information.this, "Either title or author text is empty", Toast.LENGTH_LONG).show();
                 else {
                     dataSource.updateBook(thisBooks.getBook_id(), newBookTitle, newAuthorName);
                     finish();
@@ -64,12 +68,14 @@ public class Information extends AppCompatActivity {
         });
     }
 
+    //Starts the database on start
     @Override
     protected void onStart() {
         super.onStart();
         dataSource.open();
     }
 
+    //Closes the database on pause
     @Override
     protected void onPause() {
         super.onPause();

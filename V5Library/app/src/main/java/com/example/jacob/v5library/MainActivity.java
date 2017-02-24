@@ -1,14 +1,10 @@
 package com.example.jacob.v5library;
 
-import android.app.Activity;
 import android.app.ListActivity;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.os.Parcelable;
 import android.preference.PreferenceManager;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -16,19 +12,16 @@ import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Toast;
 
-import java.io.Serializable;
 import java.util.List;
 
 public class MainActivity extends ListActivity {
-    Boolean firstStart;
+    Boolean firstStart = true;
     Button addBtn;
     EditText titleTxt, authorTxt;
     String title = null, author = null;
     protected static Database dataSource;
     private List<Books> values;
     protected static ArrayAdapter<Books> arrayAdapter = null;
-    private SharedPreferences pref = null;
-    ListView listView;
 
     @Override
     protected void onListItemClick(ListView l, View v, int position, long id) {
@@ -44,19 +37,28 @@ public class MainActivity extends ListActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        //Initiating buttons and edittexts
         addBtn = (Button) findViewById(R.id.addBtn);
         titleTxt = (EditText) findViewById(R.id.nameTxt);
         authorTxt = (EditText) findViewById(R.id.authorTxt);
 
-
+        //Creating the database
         dataSource = new Database(this);
+        //Opening the database
         dataSource.open();
+        //The list grabs all the current books i the database
         values = dataSource.getAllBooks();
         arrayAdapter = new ArrayAdapter<Books>(this, android.R.layout.simple_list_item_1, values);
 
-        firstStart = true;
-        pref = PreferenceManager.getDefaultSharedPreferences(this);
-        firstStart = pref.getBoolean("firstTime", false);
+        /*Using a boolean with the value of true to create six default
+        * books the very first time the database creates.
+        * A sharedpreferences are used to store the boolean value to false after
+        * the database has been created.
+        * */
+        final SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+
         if (firstStart){
             createBooks("Tapeter och solsken", "Janne Andersson");
             createBooks("Böcker jag läst", "Jag");
@@ -65,12 +67,14 @@ public class MainActivity extends ListActivity {
             createBooks("Halt eller springa?", "Nils Dacke");
             createBooks("Gurkor eller tomater", "Astrid Lindgren");
 
-            pref.edit().putBoolean("firstTime", false).commit();
+            editor.putBoolean("firstStart", false).apply();
         }
-
         setListAdapter(arrayAdapter);
 
-        //Add a book and an author
+        /*A button listener where you can add a new book.
+        * Uses if-statement to check if either title or  author String contains at least
+        * a single sign. If not the user will receive a toast-message.
+        * */
         addBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -87,13 +91,18 @@ public class MainActivity extends ListActivity {
                     authorTxt.setText("");
                 }
                 else
-                    Toast.makeText(MainActivity.this, "ESCANDALOOOOOOO", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(MainActivity.this, "Please type in a title and an author.", Toast.LENGTH_SHORT).show();
+
+                //Updates the listView
                 arrayAdapter.notifyDataSetChanged();
             }
         });
 
     }
 
+    /*A method to create a new book to the database and also updates
+    * the listView with the arrayAdapter
+    */
     void createBooks(String title, String author){
         Books newBook = dataSource.createBook(title, author);
         arrayAdapter.add(newBook);
@@ -101,6 +110,9 @@ public class MainActivity extends ListActivity {
     }
 
 
+    /*When resuming from the different activity, the mainActivity should
+    * grab all the books from the list, if the user has been either updating or removing a book.
+    * */
     @Override
     protected void onResume() {
         super.onResume();
@@ -111,6 +123,7 @@ public class MainActivity extends ListActivity {
         arrayAdapter.notifyDataSetChanged();
     }
 
+    //Closes the database when the user enters a nwe activity or closing the application.
     @Override
     protected void onPause() {
         super.onPause();
